@@ -1,0 +1,9 @@
+dictionaries can be sorted:
+sorted(dic.items(),key=lambda x:x[1],reverse=True) to sort based on values in reverse order)
+
+\W+ to split words leaving all non word characters
+list.reverse
+list.index(element) -works as lastindex
+
+list1=sum(list1,[])-used to flatten a nested list
+string.split()-splits when multiple spaces
