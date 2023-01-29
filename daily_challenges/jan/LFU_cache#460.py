@@ -1,67 +1,65 @@
 class LFUCache:
 
     def __init__(self, capacity: int):
-        self.size=capacity
-        self.hash={}
-        self.q=[]
-        self.freq=defaultdict(set)
+        # data structure 1: dictionary which maps key to count
+        # data strcuture 2: dictionary which maps count to a orderedDict
+        self.capacity = capacity
+        self.used = 0
+        self.cache_key = dict()
+        self.cache_orderedCount = dict()
+        self.min_cnt = 0
+        
 
     def get(self, key: int) -> int:
-        if(key in self.hash):
-            self.q.remove(key)
-            self.q=[key]+self.q
-            self.freq[self.hash[key][1]].remove(key)
-            if(not self.freq[self.hash[key][1]]):
-                del self.freq[self.hash[key][1]]
-            self.hash[key][1]+=1
-            self.freq[self.hash[key][1]].add(key)
-            return self.hash[key][0]
-        else:
-            return -1
+        val = -1
+        if key in self.cache_key:
+            val = self.cache_key[key][0]
+            old_cnt = self.cache_key[key][1]
+            self.cache_key[key][1] += 1
+            # update the count dictionary
+            del self.cache_orderedCount[old_cnt][key]
+            # insert the key into the new count dictionary
+            new_cnt = self.cache_key[key][1]
+            self._updateCacheCountDict(key, val, new_cnt)
+            # update the min count
+            if self.min_cnt == old_cnt and len(self.cache_orderedCount[old_cnt]) == 0:
+                self.min_cnt = new_cnt
+        return val
+        
 
     def put(self, key: int, value: int) -> None:
-        if(key in self.hash):
-            self.hash[key][0]=value
-            self.freq[self.hash[key][1]].remove(key)
-            if(not self.freq[self.hash[key][1]]):
-                del self.freq[self.hash[key][1]]
-            self.hash[key][1]+=1#frequency
-            self.freq[self.hash[key][1]].add(key)            
-            self.q.remove(key)
-            self.q=[key]+self.q
+        if self.capacity <= 0:
+            return
+        
+        if key in self.cache_key:
+            self.cache_key[key][0] = value
+            old_cnt = self.cache_key[key][1]
+            self.cache_key[key][1] += 1
+            new_cnt = old_cnt + 1
+            del self.cache_orderedCount[old_cnt][key]
+            self._updateCacheCountDict(key, value, new_cnt)
+            # update the min count
+            if self.min_cnt == old_cnt and len(self.cache_orderedCount[old_cnt]) == 0:
+                self.min_cnt = new_cnt
         else:
-            if(self.size==0):
-                return
-            if(len(self.hash)==self.size):
-                minn=min(self.freq.keys())
-                if(len(self.freq[minn])==1):
-                    a=self.freq[minn].pop()
-                    self.q.remove(a)
-                    del self.hash[a]
-                    del self.freq[minn]
-
-                else:
-                    t=self.freq[minn]
-                    for xx in self.q[::-1]:
-                        if(xx in t):
-                            self.freq[minn].remove(xx)
-                            del self.hash[xx]
-                            self.q.remove(xx)
-                            pos=xx
-                            break
-
-                self.q=[key]+self.q
-                self.hash[key]=[value,1]
-                self.freq[1].add(key)
-
+            # the key is not in cache yet
+            if self.used < self.capacity:
+                # the cache is not full, we can directly add the new key value pair
+                self.cache_key[key] = [value, 1]
+                self._updateCacheCountDict(key, value, 1)
+                self.used += 1
+                self.min_cnt = 1
             else:
-                self.hash[key]=[value,1]
-                self.freq[1].add(key)
-                self.q=[key]+self.q
-
-
-
-# Your LFUCache object will be instantiated and called as such:
-# obj = LFUCache(capacity)
-# param_1 = obj.get(key)
-# obj.put(key,value)
+                # the cache is full
+                rm_key, rm_val = self.cache_orderedCount[self.min_cnt].popitem(0)
+                del self.cache_key[rm_key]
+                # add new key value
+                self.cache_key[key] = [value, 1]
+                self._updateCacheCountDict(key, value, 1)
+                self.min_cnt = 1
+                
+    def _updateCacheCountDict(self, key, value, new_cnt):
+        if new_cnt not in self.cache_orderedCount:
+            self.cache_orderedCount[new_cnt] = OrderedDict()
+        self.cache_orderedCount[new_cnt][key] = value
+        self.cache_orderedCount[new_cnt].move_to_end(key)
