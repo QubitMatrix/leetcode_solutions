@@ -1,8 +1,13 @@
 class Solution:
     def fib(self, n: int) -> int:
-        if(n==0):
-            return 0
-        elif(n==1):
-            return 1
-        else:
-            return self.fib(n-1)+self.fib(n-2)
+        mem={}
+        mem[0]=0
+        mem[1]=1
+        x=2
+        while(x<=n):
+            mem[x]=mem[x-1]+mem[x-2]
+            x+=1
+        return mem[n]
+
+a=Solution()
+print(a.fib(3))
