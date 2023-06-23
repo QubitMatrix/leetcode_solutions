@@ -3,12 +3,15 @@ class Solution:
         """
         Do not return anything, modify nums1 in-place instead.
         """
-        print(m)
-        for x in range(len(nums2)):
-            for y in range(len(nums1)):
-                if(nums2[x]<nums1[y] or y>=m):
-                    nums1[y+1:]=nums1[y:-1]
-                    nums1[y]=nums2[x]
-                    m+=1
-                    print(nums1)
-                    break
+        y=0
+        for x in range(len(nums1)):
+            if(y<len(nums2) and nums1[x]>nums2[y]):
+                for z in range(len(nums1)-2,x-1,-1):
+                    nums1[z+1]=nums1[z]
+                nums1[x]=nums2[y]
+                y+=1
+            if(x-y==m and nums1[x]==0):
+                for z in range(x,len(nums1)):
+                    nums1[z]=nums2[y]
+                    y+=1
+                break
